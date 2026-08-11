@@ -1,0 +1,16 @@
+.venv/
+
+.env
+
+__pycache__/
+*.py[cod]
+
+.ipynb_checkpoints/
+
+data/processed/
+vectorstore/
+
+.vscode/
+
+.DS_Store
+Thumbs.db
