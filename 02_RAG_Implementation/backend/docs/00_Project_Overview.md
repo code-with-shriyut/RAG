@@ -1,6 +1,6 @@
 # RAG Architecture Handbook v1.0
 
-**Project Name:** Kawaii RAG Assistant
+**Project Name:** Yomiko👩🏻🌸 RAG Assistant
 
 **Version:** 1.0
 
@@ -12,7 +12,7 @@
 
 # 1. Project Overview
 
-Kawaii RAG Assistant is an end-to-end Retrieval Augmented Generation (RAG) application that enables users to upload PDF documents and ask natural language questions based on their content.
+Yomiko👩🏻🌸 a RAG Assistant is an end-to-end Retrieval Augmented Generation (RAG) application that enables users to upload PDF documents and ask natural language questions based on their content.
 
 Unlike a traditional Large Language Model (LLM), which relies only on its pre-trained knowledge, this application retrieves relevant information directly from the uploaded document before generating an answer. This significantly reduces hallucinations and produces grounded, explainable responses with page citations.
 

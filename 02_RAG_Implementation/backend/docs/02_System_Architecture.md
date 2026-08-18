@@ -2,7 +2,7 @@
 
 ## Purpose of this Chapter
 
-This chapter explains the complete software architecture of the Kawaii RAG Assistant. It covers the logical layers, data flow, backend modules, frontend interaction, and the lifecycle of a user request from PDF upload to answer generation.
+This chapter explains the complete software architecture of the our RAG Assistant "Yomiko👩🏻🌸". It covers the logical layers, data flow, backend modules, frontend interaction, and the lifecycle of a user request from PDF upload to answer generation.
 
 ---
 
