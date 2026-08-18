@@ -20,29 +20,23 @@ This separation makes the project modular, maintainable, and easily extensible.
 
 # 2. High-Level Architecture
 
-```text
-                    USER
-                      │
-                      ▼
-            Streamlit Interface
-                      │
-                      ▼
-      ┌─────────────────────────────┐
-      │        RAG CORE             │
-      │                             │
-      │ Loader → Cleaner → Chunker  │
-      │            ↓                │
-      │       Embedder              │
-      │            ↓                │
-      │      FAISS Vector Store     │
-      │            ↓                │
-      │ Retriever → Prompt Builder  │
-      │            ↓                │
-      │        Groq LLM             │
-      └─────────────────────────────┘
-                      │
-                      ▼
-              Final Answer + Citation
+The following diagram shows the complete architecture of the Kawaii RAG Assistant.
+
+```mermaid
+flowchart TD
+
+    U[User]
+    UI[Streamlit UI]
+    RAG[RAG Core]
+    FAISS[(FAISS Vector DB)]
+    LLM[Groq Llama 3.1]
+    OUT[Answer + Citation]
+
+    U --> UI
+    UI --> RAG
+    RAG --> FAISS
+    RAG --> LLM
+    LLM --> OUT
 ```
 
 The Streamlit application acts only as an orchestrator. All business logic resides inside the RAG Core.
@@ -50,6 +44,37 @@ The Streamlit application acts only as an orchestrator. All business logic resid
 ---
 
 # 3. Layered Architecture
+```mermaid
+flowchart TB
+
+subgraph Presentation
+UI[Streamlit UI]
+end
+
+subgraph Core["RAG Core"]
+L[Loader]
+C[Cleaner]
+CH[Chunker]
+E[Embedder]
+R[Retriever]
+P[Prompt Builder]
+end
+
+subgraph Infra["Infrastructure"]
+F[(FAISS)]
+G[Groq API]
+S[Session State]
+end
+
+UI --> L
+L --> C
+C --> CH
+CH --> E
+E --> F
+R --> P
+P --> G
+S -. Cache .- UI
+```
 
 ## Presentation Layer
 
@@ -126,6 +151,29 @@ This improves readability and scalability.
 ---
 
 # 5. Data Flow
+
+```mermaid
+flowchart TD
+
+A[PDF Upload]
+B[Loader]
+C[Cleaner]
+D[Chunker]
+E[Embeddings]
+F[(FAISS)]
+
+Q[User Question]
+R[Retriever]
+P[Prompt Builder]
+L[Groq LLM]
+O[Answer]
+
+A --> B --> C --> D --> E --> F
+
+Q --> R
+F --> R
+R --> P --> L --> O
+```
 
 The application transforms data through multiple representations.
 
