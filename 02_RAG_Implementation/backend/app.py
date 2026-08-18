@@ -23,13 +23,13 @@ from src.generation.llm import generate_answer
 # ==========================================================
 
 st.set_page_config(
-    page_title="Kawaii RAG Assistant",
+    page_title="Yomiko",
     page_icon="🌸",
     layout="wide"
 )
 
-st.title("🌸 Kawaii RAG Assistant")
-st.caption("AI-powered document question answering using RAG")
+st.title("Hi! I am Yomiko👩🏻🌸")
+st.caption("Your AI-powered document question answering assistant!")
 st.divider()
 
 
