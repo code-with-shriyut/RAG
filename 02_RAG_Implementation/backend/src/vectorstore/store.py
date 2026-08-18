@@ -52,9 +52,14 @@ class FAISSVectorStore:
             })
 
         # Convert Python list -> NumPy float32 array
-        vectors = np.array(vectors, dtype=np.float32)
+        vectors = np.asarray(vectors, dtype=np.float32)
 
-        # Insert vectors into FAISS
+        # Ensure FAISS always receives a 2D matrix
+        if vectors.ndim == 1:
+            vectors = vectors.reshape(1, -1)
+
+        print("FAISS Shape:", vectors.shape)
+
         self.index.add(vectors)
 
     def save(self, folder_path: str):
