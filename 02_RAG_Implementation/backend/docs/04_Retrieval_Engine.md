@@ -93,8 +93,9 @@ This allows FAISS to retrieve them successfully.
 ## Semantic Embedding Space
 
 Rather than comparing words, embeddings compare semantic meaning.
-
-<img src="02_RAG_Implementation\backend\docs\diagrams\Semantic_Embedding_Space.png" width="950">
+<p align="center">
+  <img src="./diagrams/Semantic_Embedding_Space.png" width="950"/>
+</p>
 ---
 
 # 5. Query Embedding
@@ -136,8 +137,9 @@ This index performs exact nearest-neighbor search using Euclidean distance.
 
 FAISS searches vectors instead of raw text.
 
-<img src = "02_RAG_Implementation\backend\docs\diagrams\FAISS_Nearest_Neighbor_Search.png" width = "950">
-
+<p align="center">
+  <img src="./diagrams/FAISS_Nearest_Neighbor_Search.png" width="950"/>
+</p>
 The vectors with the smallest L2 distance become the retrieved document chunks.
 
 ---
@@ -184,8 +186,9 @@ Three chunks provide enough surrounding context while minimizing token usage.
 
 The document is divided into overlapping chunks so that important sentences are not split across chunk boundaries.
 
-<img src = "02_RAG_Implementation\backend\docs\diagrams\Chunk_Overlap.png" width = "950">
-
+<p align="center">
+  <img src="./diagrams/Chunk_Overlap.png" width="950"/>
+</p>
 
 The overlap preserves contextual continuity between consecutive chunks.
 

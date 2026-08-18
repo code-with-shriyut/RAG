@@ -23,8 +23,9 @@ This separation is the primary optimization of the system.
 
 The following sequence illustrates the complete interaction between the user, Streamlit application, FAISS retriever, and Groq LLM.
 
-<img src = "02_RAG_Implementation\backend\docs\diagrams\Sequence_Diagram.png" width = "950">
-
+<p align="center">
+  <img src="./diagrams/Sequence_Diagram.png" width="950"/>
+</p>
 The indexing pipeline is executed only once, while the retrieval pipeline is executed for every user question.
 
 ---
