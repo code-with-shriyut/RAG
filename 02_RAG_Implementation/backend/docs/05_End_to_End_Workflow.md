@@ -19,29 +19,32 @@ This separation is the primary optimization of the system.
 
 # 2. End-to-End Architecture
 
-```text
-                 USER
-                   │
-        Upload PDF │ Ask Question
-                   │
-        ┌──────────┴──────────┐
-        │                     │
-        ▼                     ▼
- Document Indexing      Question Answering
-        │                     │
- Loader                Query Embedding
-        │                     │
- Cleaner              FAISS Retrieval
-        │                     │
- Chunker             Top-K Chunks
-        │                     │
- Embedder           Prompt Builder
-        │                     │
- FAISS Index          Groq LLM
-        │                     │
-        └──────────┬──────────┘
-                   ▼
-          Final Answer + Citation
+## Sequence Diagram
+
+The following sequence illustrates the complete interaction between the user, Streamlit application, FAISS retriever, and Groq LLM.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Streamlit UI
+    participant Loader
+    participant FAISS
+    participant Retriever
+    participant Groq
+
+    User->>UI: Upload PDF
+    UI->>Loader: Extract pages
+    Loader-->>UI: Clean documents
+    UI->>FAISS: Store embeddings
+
+    User->>UI: Ask question
+    UI->>Retriever: Retrieve Top-3
+    Retriever->>FAISS: Similarity Search
+    FAISS-->>Retriever: Relevant chunks
+    Retriever-->>UI: Context
+    UI->>Groq: Prompt + Context
+    Groq-->>UI: Generated answer
+    UI-->>User: Answer + Citations
 ```
 
 The indexing pipeline is executed only once, while the retrieval pipeline is executed for every user question.
@@ -162,6 +165,34 @@ This significantly reduces latency.
 
 ---
 
+## Session State Architecture
+
+The FAISS index is cached after indexing, preventing repeated preprocessing.
+
+```mermaid
+flowchart TD
+
+A[Upload PDF]
+
+B[Index Document]
+
+C["Session State (vector_store)"]
+
+Q1[Question 1]
+Q2[Question 2]
+Q3[Question 3]
+
+A --> B --> C
+
+C --> Q1
+C --> Q2
+C --> Q3
+```
+
+The document is indexed only once, while multiple questions reuse the same vector database.
+
+---
+
 # 5. Phase 2 — Question Answering
 
 Suppose the user asks:
@@ -269,6 +300,28 @@ The UI then displays:
 | LLM | Final Answer |
 
 Every module transforms the data into a new representation while preserving metadata.
+
+---
+
+## Data Transformation Pipeline
+
+Each module transforms the document into a new representation.
+
+```mermaid
+flowchart LR
+
+PDF[PDF]
+
+DOC[Documents]
+
+CHUNK[Chunks]
+
+VEC["384-d Vectors"]
+
+INDEX[FAISS]
+
+PDF --> DOC --> CHUNK --> VEC --> INDEX
+```
 
 ---
 

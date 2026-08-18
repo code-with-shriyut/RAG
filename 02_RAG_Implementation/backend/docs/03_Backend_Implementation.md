@@ -41,6 +41,37 @@ Each module follows the **Single Responsibility Principle**, making the project 
 
 ---
 
+## Backend Module Dependency
+
+```mermaid
+flowchart TD
+
+APP[app.py]
+
+L[loader.py]
+C[cleaner.py]
+CH[chunker.py]
+E[embedder.py]
+S[store.py]
+R[retriever.py]
+P[prompt_builder.py]
+LLM[llm.py]
+
+APP --> L
+L --> C
+C --> CH
+CH --> E
+E --> S
+
+APP --> R
+R --> P
+P --> LLM
+```
+
+`app.py` orchestrates the complete workflow while each module maintains a single responsibility.
+
+---
+
 # 2. Execution Order
 
 Whenever a new PDF is uploaded, the modules execute in the following sequence.

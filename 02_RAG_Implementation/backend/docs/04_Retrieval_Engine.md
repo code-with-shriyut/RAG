@@ -90,6 +90,28 @@ This allows FAISS to retrieve them successfully.
 
 ---
 
+## Semantic Embedding Space
+
+Rather than comparing words, embeddings compare semantic meaning.
+
+```text
+                 Semantic Space
+
+          Loan Default
+                ●
+
+ Borrower Failed ●      ● EMI Overdue
+
+          Query
+            ★
+
+ Weather ●                    Football ●
+```
+
+The query is positioned closer to loan-related concepts than unrelated topics, allowing FAISS to retrieve meaningful context.
+
+---
+
 # 5. Query Embedding
 
 When a user asks a question, the application does **not** compare raw text.
@@ -122,6 +144,37 @@ faiss.IndexFlatL2()
 ```
 
 This index performs exact nearest-neighbor search using Euclidean distance.
+
+---
+
+## FAISS Nearest Neighbor Search
+
+FAISS searches vectors instead of raw text.
+
+```mermaid
+flowchart LR
+
+Q["Query Vector"]
+
+V1["Vector 17"]
+
+V2["Vector 03"]
+
+V3["Vector 09"]
+
+V4["Vector 25"]
+
+Q --> V1
+Q --> V2
+Q --> V3
+Q -. Far .-> V4
+
+V1 --> OUT["Top-3 Results"]
+V2 --> OUT
+V3 --> OUT
+```
+
+The vectors with the smallest L2 distance become the retrieved document chunks.
 
 ---
 
@@ -160,6 +213,27 @@ Meaning only the three most relevant chunks are returned.
 | Top-K = 20 | Too much irrelevant information |
 
 Three chunks provide enough surrounding context while minimizing token usage.
+
+---
+
+## Chunk Overlap Strategy
+
+The document is divided into overlapping chunks so that important sentences are not split across chunk boundaries.
+
+```mermaid
+flowchart LR
+
+A["Characters 0–1000"]
+
+B["Characters 800–1800"]
+
+C["Characters 1600–2600"]
+
+A <-- "200 overlap" --> B
+B <-- "200 overlap" --> C
+```
+
+The overlap preserves contextual continuity between consecutive chunks.
 
 ---
 
