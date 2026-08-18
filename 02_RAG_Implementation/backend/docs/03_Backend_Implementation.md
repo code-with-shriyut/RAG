@@ -338,3 +338,488 @@ These three modules collectively form the **Document Ingestion Layer** of the RA
 
 ---
 
+# Module 4 — embedder.py
+
+## Responsibility
+
+The embedding module converts every text chunk into a dense numerical vector that captures its semantic meaning.
+
+This is the bridge between **human language** and **vector search**.
+
+---
+
+## Why Embeddings?
+
+Computers cannot directly compare meanings between sentences.
+
+Example:
+
+| Sentence A | Sentence B |
+|------------|------------|
+| Customer defaulted on EMI | Borrower failed to repay the loan |
+
+Although the wording is different, both describe the same concept.
+
+Embeddings place semantically similar sentences close together in vector space.
+
+---
+
+## Embedding Model
+
+**Model Used:** `all-MiniLM-L6-v2`
+
+| Property | Value |
+|----------|------:|
+| Dimensions | 384 |
+| Framework | Sentence Transformers |
+| Output Type | NumPy Vector |
+| Purpose | Semantic Retrieval |
+
+The same model is used for both document chunks and user queries.
+
+---
+
+## Input
+
+```python
+{
+    "text": "...chunk...",
+    "metadata": {...}
+}
+```
+
+---
+
+## Output
+
+```python
+{
+    "text": "...chunk...",
+    "embedding": [0.18, -0.44, ...],
+    "metadata": {...}
+}
+```
+
+Each embedding contains **384 floating-point values**.
+
+---
+
+## Internal Workflow
+
+1. Read chunk text
+2. Pass text into SentenceTransformer
+3. Generate 384-dimensional vector
+4. Convert NumPy array into Python list
+5. Preserve metadata
+6. Return embedded chunk
+
+---
+
+## Why `convert_to_numpy=True`?
+
+FAISS expects numerical vectors in NumPy format. Converting immediately avoids unnecessary type conversions later.
+
+---
+
+## Time Complexity
+
+**O(C)**
+
+Where **C** is the number of chunks.
+
+---
+
+# Module 5 — store.py
+
+## Responsibility
+
+Store document embeddings inside a FAISS vector index for efficient similarity search.
+
+---
+
+## What is FAISS?
+
+FAISS (**Facebook AI Similarity Search**) is a vector database library optimized for nearest-neighbor search over high-dimensional embeddings.
+
+Instead of searching text directly, FAISS searches vectors.
+
+---
+
+## Index Used
+
+```python
+faiss.IndexFlatL2()
+```
+
+This implementation uses **L2 (Euclidean Distance)** for similarity.
+
+---
+
+## Internal Objects
+
+The `FAISSVectorStore` class maintains two independent objects.
+
+| Object | Purpose |
+|---------|----------|
+| index | Stores embeddings |
+| documents | Stores text + metadata |
+
+This separation allows vectors to remain lightweight while preserving human-readable content.
+
+---
+
+## Input
+
+```python
+embedded_chunks
+```
+
+---
+
+## Stored Structure
+
+```python
+self.documents = [
+    {
+        "text": "...",
+        "metadata": {...}
+    }
+]
+```
+
+The FAISS index stores only numerical vectors.
+
+---
+
+## Why not store text inside FAISS?
+
+FAISS is optimized for mathematical vector operations.
+
+Text retrieval happens by mapping FAISS indices back to the `documents` list.
+
+---
+
+## Public Methods
+
+| Method | Purpose |
+|---------|----------|
+| add_documents() | Insert vectors |
+| total_vectors() | Return vector count |
+| save() | Persist index |
+| load() | Restore index |
+
+---
+
+## Time Complexity
+
+Adding vectors:
+
+**O(C)**
+
+Searching:
+
+**O(N)** for `IndexFlatL2`, where **N** is the number of stored vectors.
+
+---
+
+# Module 6 — retriever.py
+
+## Responsibility
+
+Retrieve the Top-K most relevant document chunks using semantic similarity.
+
+This is the **core intelligence** of the RAG pipeline.
+
+---
+
+## Input
+
+```python
+query: str
+```
+
+Example:
+
+```text
+What is chunk overlap?
+```
+
+---
+
+## Internal Workflow
+
+1. Convert query into embedding
+2. Convert embedding to float32
+3. Search FAISS
+4. Receive nearest indices
+5. Map indices back to documents
+6. Return retrieved chunks
+
+---
+
+## Why use the same embedding model?
+
+Both document embeddings and query embeddings must exist in the **same semantic vector space**.
+
+Different embedding models produce incompatible representations.
+
+---
+
+## Returned Structure
+
+```python
+[
+    {
+        "text": "...",
+        "metadata": {
+            "page": 8
+        }
+    }
+]
+```
+
+---
+
+## Top-K Retrieval
+
+Current configuration:
+
+```python
+top_k = 3
+```
+
+Why 3?
+
+- Sufficient context
+- Lower latency
+- Lower token usage
+- Reduced irrelevant information
+
+---
+
+## Engineering Decision
+
+The retriever never communicates with the LLM.
+
+Its only responsibility is finding evidence.
+
+This separation improves modularity and testing.
+
+---
+
+## Time Complexity
+
+FAISS Search:
+
+**O(N)** using IndexFlatL2.
+
+---
+
+# Module 7 — prompt_builder.py
+
+## Responsibility
+
+Construct a grounded prompt by combining retrieved chunks and the user's question.
+
+---
+
+## Why Prompt Building?
+
+Instead of sending the entire PDF, only the retrieved evidence is forwarded to the LLM.
+
+This dramatically reduces hallucinations.
+
+---
+
+## Input
+
+- User Question
+- Retrieved Chunks
+
+---
+
+## Output
+
+A single formatted string.
+
+Example:
+
+```text
+Context:
+
+[Page 8]
+Chunk...
+
+Question:
+What is chunk overlap?
+
+Answer:
+```
+
+---
+
+## Prompt Design Principles
+
+- Use only retrieved context
+- Preserve page numbers
+- Separate instructions from context
+- Keep question explicit
+
+---
+
+## Why include page numbers?
+
+Although the LLM mainly uses text, page references improve explainability and allow the UI to display citations afterward.
+
+---
+
+# Module 8 — llm.py
+
+## Responsibility
+
+Generate the final answer using Groq's hosted Llama model.
+
+This module contains **no retrieval logic**.
+
+---
+
+## Input
+
+```python
+prompt: str
+```
+
+---
+
+## Output
+
+```python
+answer: str
+```
+
+---
+
+## API Workflow
+
+1. Receive prompt
+2. Call Groq Chat Completion API
+3. Generate response
+4. Return answer text
+
+---
+
+## Why isolate the LLM?
+
+Replacing the LLM becomes extremely easy.
+
+Possible alternatives:
+
+- GPT
+- Gemini
+- Claude
+- Mistral
+
+Only this module would change.
+
+---
+
+# Module 9 — app.py
+
+## Responsibility
+
+`app.py` is the **orchestrator** of the entire application.
+
+It coordinates all modules but does not implement AI logic itself.
+
+---
+
+## Primary Responsibilities
+
+| Feature | Description |
+|----------|-------------|
+| PDF Upload | Accept user documents |
+| Indexing | Execute ingestion pipeline |
+| Session State | Cache FAISS index |
+| Question Input | Accept user queries |
+| Retrieval | Invoke retriever |
+| Generation | Display final answer |
+
+---
+
+## Session State Variables
+
+| Variable | Purpose |
+|----------|----------|
+| vector_store | Cached FAISS index |
+| filename | Detect new uploads |
+| is_indexed | Track indexing status |
+
+---
+
+## Why Session State?
+
+Without caching:
+
+Every question would regenerate embeddings.
+
+With Session State:
+
+- Upload once
+- Index once
+- Ask unlimited questions
+
+This significantly improves performance.
+
+---
+
+## Two Independent Pipelines
+
+### Indexing Pipeline
+
+```text
+Upload PDF
+    ↓
+Loader
+    ↓
+Cleaner
+    ↓
+Chunker
+    ↓
+Embedder
+    ↓
+FAISS
+```
+
+### Question Pipeline
+
+```text
+Question
+    ↓
+Retriever
+    ↓
+Prompt Builder
+    ↓
+Groq
+    ↓
+Answer
+```
+
+Keeping these pipelines independent is one of the most important architectural decisions in this project.
+
+---
+
+# Backend Module Summary
+
+| Module | Responsibility |
+|---------|----------------|
+| loader.py | Extract PDF pages |
+| cleaner.py | Normalize text |
+| chunker.py | Create overlapping chunks |
+| embedder.py | Generate embeddings |
+| store.py | Store vectors in FAISS |
+| retriever.py | Semantic Top-K retrieval |
+| prompt_builder.py | Grounded prompt creation |
+| llm.py | LLM answer generation |
+| app.py | Application orchestration |
+
+Together, these modules implement the complete Retrieval Augmented Generation backend while maintaining clear separation of concerns and high modularity.
