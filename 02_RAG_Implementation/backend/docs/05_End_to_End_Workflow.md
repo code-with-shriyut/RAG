@@ -23,29 +23,7 @@ This separation is the primary optimization of the system.
 
 The following sequence illustrates the complete interaction between the user, Streamlit application, FAISS retriever, and Groq LLM.
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant UI as Streamlit UI
-    participant Loader
-    participant FAISS
-    participant Retriever
-    participant Groq
-
-    User->>UI: Upload PDF
-    UI->>Loader: Extract pages
-    Loader-->>UI: Clean documents
-    UI->>FAISS: Store embeddings
-
-    User->>UI: Ask question
-    UI->>Retriever: Retrieve Top-3
-    Retriever->>FAISS: Similarity Search
-    FAISS-->>Retriever: Relevant chunks
-    Retriever-->>UI: Context
-    UI->>Groq: Prompt + Context
-    Groq-->>UI: Generated answer
-    UI-->>User: Answer + Citations
-```
+<img src = "02_RAG_Implementation\backend\docs\diagrams\Sequence_Diagram.png" width = "950">
 
 The indexing pipeline is executed only once, while the retrieval pipeline is executed for every user question.
 
