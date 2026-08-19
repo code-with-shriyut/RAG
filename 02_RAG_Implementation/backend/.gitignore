@@ -13,3 +13,12 @@ data/processed/
 
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Runtime RAG Data
+data/uploads/
+data/vectorstores/
+data/documents.json

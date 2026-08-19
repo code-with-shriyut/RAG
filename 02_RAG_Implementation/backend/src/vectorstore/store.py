@@ -2,7 +2,7 @@ import faiss
 import numpy as np
 import pickle
 from pathlib import Path
-
+from sentence_transformers import SentenceTransformer
 
 class FAISSVectorStore:
     """
@@ -31,6 +31,10 @@ class FAISSVectorStore:
 
         # Stores original text + metadata
         self.documents = []
+        # Same embedding model used during indexing
+        self.embedding_model = SentenceTransformer(
+            "sentence-transformers/all-MiniLM-L6-v2"
+        )
 
     def add_documents(self, embedded_chunks: list[dict]):
         """
@@ -104,3 +108,45 @@ class FAISSVectorStore:
         """
 
         return self.index.ntotal
+    def similarity_search(
+    self,
+    query: str,
+    k: int = 4
+    ):
+        """
+        Retrieve top-k most similar chunks.
+
+        Returns:
+            List of dictionaries:
+            {
+                text,
+                metadata,
+                score
+            }
+        """
+
+        query_vector = self.embedding_model.encode(
+            query,
+            convert_to_numpy=True
+        ).astype(np.float32)
+
+        query_vector = query_vector.reshape(1, -1)
+
+        distances, indices = self.index.search(query_vector, k)
+
+        results = []
+
+        for score, idx in zip(distances[0], indices[0]):
+
+            if idx == -1:
+                continue
+
+            doc = self.documents[idx]
+
+            results.append({
+                "text": doc["text"],
+                "metadata": doc["metadata"],
+                "score": float(score)
+            })
+
+        return results
